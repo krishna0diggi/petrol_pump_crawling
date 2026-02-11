@@ -9,7 +9,7 @@ export class MapmyIndiaAuthService {
   private token: string | null = null;
   private expiry = 0;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) { }
 
   async getAuthHeader(): Promise<string> {
     if (this.token && Date.now() < this.expiry) {
@@ -23,6 +23,7 @@ export class MapmyIndiaAuthService {
       throw new Error('MapmyIndia credentials are not configured');
     }
 
+    this.logger.log('Refreshing MapmyIndia OAuth token...');
     const res = await axios.post(
       'https://outpost.mappls.com/api/security/oauth/token',
       null,

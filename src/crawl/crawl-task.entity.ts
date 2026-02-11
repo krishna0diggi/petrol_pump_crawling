@@ -1,9 +1,10 @@
-import { FuelType } from 'src/fuel/fuel.type';
+import { FuelType } from "../fuel/fuel.type";
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   Unique,
+  Index,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -27,6 +28,7 @@ export class CrawlTaskEntity {
   @Column({ type: 'varchar', length: 10 })
   fuelType: FuelType;
 
+  @Index()
   @Column({ type: 'varchar', length: 10, default: 'PENDING' })
   status: CrawlStatus;
 

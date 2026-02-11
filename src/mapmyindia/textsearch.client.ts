@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { MapmyIndiaAuthService } from './auth.service';
 
 @Injectable()
 export class MapmyIndiaTextSearchClient {
-  constructor(private readonly auth: MapmyIndiaAuthService) {}
+  private readonly logger = new Logger(MapmyIndiaTextSearchClient.name);
+
+  constructor(private readonly auth: MapmyIndiaAuthService) { }
 
   async search(params: {
     query: string;
@@ -14,9 +16,11 @@ export class MapmyIndiaTextSearchClient {
     page: number;
   }) {
     const authHeader = await this.auth.getAuthHeader();
+    const url = 'https://atlas.mapmyindia.com/api/places/textsearch/json';
 
-    return axios.get(
-      'https://atlas.mapmyindia.com/api/places/textsearch/json',
+    this.logger.log(`API Call: ${url} (query="${params.query}", page=${params.page})`);
+
+    return axios.get(url,
       {
         headers: { Authorization: authHeader },
         params: {

@@ -1,9 +1,10 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Logger, Query } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 @Controller('fuel-stations')
 export class FuelController {
-  constructor(private readonly dataSource: DataSource) {}
+  private readonly logger = new Logger(FuelController.name);
+  constructor(private readonly dataSource: DataSource) { }
 
   /**
    * PUBLIC API
@@ -15,6 +16,7 @@ export class FuelController {
     @Query('lng') lng: number,
     @Query('radius') radius = 5000,
   ) {
+    this.logger.log(`Incoming nearby search: lat=${lat}, lng=${lng}, radius=${radius}`);
     return this.dataSource.query(
       `
       SELECT

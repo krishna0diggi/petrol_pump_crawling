@@ -1,34 +1,37 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { GridRepository } from '../grid/grid.repository';
 import { CrawlTaskRepository } from './crawl-task.repository';
-import { FuelType } from 'src/fuel/fuel.type';
+import { FuelType } from "../fuel/fuel.type";
 
 @Injectable()
 export class CrawlPlannerService {
+  private readonly logger = new Logger(CrawlPlannerService.name);
+
   constructor(
     private readonly gridRepo: GridRepository,
     private readonly taskRepo: CrawlTaskRepository,
-  ) {}
+  ) { }
 
   async plan(): Promise<void> {
-    const grids = await this.gridRepo.findAll();
+    const gridCount = await this.gridRepo.count();
 
-    for (const grid of grids) {
-      if (!grid.petrolCheckedAt) {
-        await this.taskRepo.createIfMissing(grid.id, FuelType.PETROL);
-      }
+    if (gridCount === 0) {
+      this.logger.warn('No grids found in database! Please run grid seeding first: npm run seed:grid');
+      return;
+    }
 
-      if (!grid.EvCheckedAt) {
-        await this.taskRepo.createIfMissing(grid.id, FuelType.EV);
-      }
+    this.logger.log(`Planning tasks for ${gridCount} grids...`);
 
-      if (!grid.CngCheckedAt) {
-        await this.taskRepo.createIfMissing(grid.id, FuelType.CNG);
-      }
+    const fuelTypes = [FuelType.PETROL, FuelType.EV, FuelType.CNG, FuelType.DIESEL];
 
-      if (!grid.dieselCheckedAt) {
-        await this.taskRepo.createIfMissing(grid.id, FuelType.DIESEL);
+    for (const fuelType of fuelTypes) {
+      this.logger.log(`Checking for new ${fuelType} tasks...`);
+      const added = await this.taskRepo.bulkCreateTasksFromGrids(fuelType);
+      if (added > 0) {
+        this.logger.log(`Added ${added} new tasks for ${fuelType}`);
       }
     }
+
+    this.logger.log(`Planning complete.`);
   }
 }

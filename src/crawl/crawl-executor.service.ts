@@ -19,7 +19,7 @@ export class CrawlExecutorService {
     private readonly rateLimit: RateLimitService,
     private readonly dedupService: DedupService,
     private readonly fuelService: FuelService,
-  ) {}
+  ) { }
 
   /**
    * Executes ONE crawl task safely.
@@ -32,6 +32,7 @@ export class CrawlExecutorService {
       return;
     }
 
+    this.logger.log(`Starting execution for task ${task.id} (Grid=${task.gridId}, Fuel=${task.fuelType})`);
     await this.taskRepo.markRunning(task);
 
     try {
@@ -41,6 +42,7 @@ export class CrawlExecutorService {
       }
 
       const keywords = this.keywordService.getKeywords(task.fuelType);
+      this.logger.log(`Keywords for ${task.fuelType}: ${keywords.join(', ')}`);
 
       for (const keyword of keywords) {
         let page = 1;
@@ -48,8 +50,8 @@ export class CrawlExecutorService {
         while (true) {
           await this.rateLimit.wait();
 
-          this.logger.debug(
-            `Grid=${grid.id} Fuel=${task.fuelType} Keyword="${keyword}" Page=${page}`,
+          this.logger.log(
+            `Searching [${task.fuelType}] "${keyword}" at Lat=${grid.centerLat}, Lng=${grid.centerLng} (Page ${page})`,
           );
 
           const response = await this.textSearch.search({
@@ -61,24 +63,34 @@ export class CrawlExecutorService {
           });
 
           const locations = response.data?.suggestedLocations || [];
+          this.logger.log(`Keyword "${keyword}" Page ${page} found ${locations.length} locations`);
 
           if (locations.length === 0) {
             break; // pagination exhausted
           }
 
+          let savedCount = 0;
+          let skippedCount = 0;
+
           for (const place of locations) {
             const exists = await this.dedupService.exists(place);
-            if (exists) continue;
+            if (exists) {
+              skippedCount++;
+              continue;
+            }
 
             await this.fuelService.save(place, task.fuelType);
+            savedCount++;
           }
+
+          this.logger.log(`Keyword "${keyword}" Page ${page}: Saved ${savedCount}, Skipped (deduped) ${skippedCount}`);
 
           page += 1;
         }
       }
 
       // mark grid as checked
-      await this.gridRepo.markeChecked(task.gridId, task.fuelType);
+      await this.gridRepo.markChecked(task.gridId, task.fuelType);
 
       await this.taskRepo.markDone(task);
       this.logger.log(`Crawl completed: ${task.id}`);

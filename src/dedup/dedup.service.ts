@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 @Injectable()
 export class DedupService {
-  constructor(private readonly dataSource: DataSource) {}
+  private readonly logger = new Logger(DedupService.name);
+  constructor(private readonly dataSource: DataSource) { }
 
   async exists(place: any): Promise<boolean> {
     if (place.eLoc) {
@@ -11,7 +12,10 @@ export class DedupService {
         `SELECT 1 FROM fuel_station WHERE eloc = $1 LIMIT 1`,
         [place.eLoc],
       );
-      if (res.length) return true;
+      if (res.length) {
+        this.logger.debug(`Skip: eLoc match (${place.eLoc}) for "${place.placeName}"`);
+        return true;
+      }
     }
 
     if (place.latitude && place.longitude) {
@@ -27,7 +31,10 @@ export class DedupService {
         `,
         [place.longitude, place.latitude],
       );
-      return res.length > 0;
+      if (res.length > 0) {
+        this.logger.debug(`Skip: Spatial proximity match for "${place.placeName}" at ${place.latitude},${place.longitude}`);
+        return true;
+      }
     }
 
     return false;

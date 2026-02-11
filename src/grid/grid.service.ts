@@ -1,17 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Grid } from './grid.entity';
 
 @Injectable()
 export class GridService {
-    // India bounding box (WGS84)
-    private readonly MIN_LAT = 6.5;
-    private readonly MAX_LAT = 37.5;
-    private readonly MIN_LNG = 68.0;
-    private readonly MAX_LNG = 97.5;
+  private readonly logger = new Logger(GridService.name);
+  // India bounding box (WGS84)
+  private readonly MIN_LAT = 6.5;
+  private readonly MAX_LAT = 37.5;
+  private readonly MIN_LNG = 68.0;
+  private readonly MAX_LNG = 97.5;
 
-    private readonly STEP_DEG = 0.045;
+  private readonly STEP_DEG = 0.15; // Increased from 0.045 to reduce total grids
 
-    generateIndiaGrid(): Grid[] {
+  generateIndiaGrid(): Grid[] {
+    this.logger.log(`Generating India grid: Lat[${this.MIN_LAT} to ${this.MAX_LAT}], Lng[${this.MIN_LNG} to ${this.MAX_LNG}]`);
     const grids: Grid[] = [];
 
     for (

@@ -26,7 +26,10 @@ export class FuelStationEntity {
         spatialFeatureType: 'Point',
         srid: 4326,
     })
-    geom: string;
+    geom: {
+        type: string;
+        coordinates: number[];
+    };
 
     @Column()
     address: string;
