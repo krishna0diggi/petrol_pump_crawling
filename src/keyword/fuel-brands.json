@@ -1,0 +1,17 @@
+ {
+  "PETROL": [
+    "Indian Oil",
+    "HP Petrol Pump",
+    "Bharat Petroleum",
+    "Essar Oil",
+    "Nayara Energy",
+    "Shell Petrol Pump",
+    "Jio BP"
+  ],
+  "EV": [
+    "EV Charging Station",
+    "Tata Power EV",
+    "Ather Grid",
+    "ChargeZone"
+  ]
+}
